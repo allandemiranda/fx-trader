@@ -26,7 +26,7 @@ public class GarchController {
 
     @GetMapping
     public ResponseEntity<Void> processData() {
-
+//        this.getCandlestickService().processLastCandlesTicks();
 
         return ResponseEntity.ok().build();
     }
