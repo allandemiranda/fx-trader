@@ -53,7 +53,12 @@ public class MacdControllerImpl implements MacdController {
     @PostMapping
     @Override
     public ResponseEntity<Void> generateAllMacd(@RequestParam @Valid @NotNull Path candlesticksFile, @RequestParam @Valid @Min(2) int fastEmaPeriod, @RequestParam @Valid @Min(2) int slowEmaPeriod, @RequestParam @Valid @Min(2) int macdEmaPeriod, @RequestParam @Valid @NotNull AppliedPrice appliedTo) {
-        this.getExecutor().execute(() -> {
+        this.getExecutor().execute(this.getRunnableJob(candlesticksFile, fastEmaPeriod, slowEmaPeriod, macdEmaPeriod, appliedTo));
+        return ResponseEntity.ok().build();
+    }
+
+    protected @NotNull Runnable getRunnableJob(@NotNull Path candlesticksFile, int fastEmaPeriod, int slowEmaPeriod, int macdEmaPeriod, @NotNull AppliedPrice appliedTo) {
+        return () -> {
             LocalDateTime start = LocalDateTime.now();
             log.info("Generate all MACD({},{},{})[{}] using candlestick path {}", fastEmaPeriod, slowEmaPeriod, macdEmaPeriod, appliedTo, candlesticksFile);
 
@@ -92,8 +97,6 @@ public class MacdControllerImpl implements MacdController {
             });
             LocalDateTime end = LocalDateTime.now();
             log.info("MACD({},{},{})[{}] generate finished, duration {}", fastEmaPeriod, slowEmaPeriod, macdEmaPeriod, appliedTo, MathUtils.formatDuration(start, end));
-        });
-
-        return ResponseEntity.ok().build();
+        };
     }
 }

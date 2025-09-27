@@ -45,7 +45,12 @@ public class RsiControllerImpl implements RsiController {
     @PostMapping
     @Override
     public ResponseEntity<Void> generateAllRsi(@RequestParam @Valid @NotNull Path candlesticksFile, @RequestParam @Valid @Min(2) int period, @RequestParam @Valid @NotNull AppliedPrice appliedTo) {
-        this.getExecutor().execute(() -> {
+        this.getExecutor().execute(this.getRunnableJob(candlesticksFile, period, appliedTo));
+        return ResponseEntity.ok().build();
+    }
+
+    protected @NotNull Runnable getRunnableJob(@NotNull Path candlesticksFile, int period, @NotNull AppliedPrice appliedTo) {
+        return () -> {
             LocalDateTime start = LocalDateTime.now();
             log.info("Generate all RSI({})[{}] using candlestick path {}", period, appliedTo, candlesticksFile);
 
@@ -101,8 +106,6 @@ public class RsiControllerImpl implements RsiController {
             });
             LocalDateTime end = LocalDateTime.now();
             log.info("RSI({})[{}] generate finished, duration {}", period, appliedTo, MathUtils.formatDuration(start, end));
-        });
-
-        return ResponseEntity.ok().build();
+        };
     }
 }
