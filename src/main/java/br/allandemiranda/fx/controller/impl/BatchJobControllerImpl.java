@@ -74,14 +74,18 @@ public class BatchJobControllerImpl implements BatchJobController {
             log.info("Starting the bach jobs");
 
             CompletableFuture<Void> emas = CompletableFuture.runAsync(() -> this.getEmasController().getRunnableJob(CANDLESTICK_H1_FILE, EMAS_EMA_HIGH_PERIOD, EMAS_EMA_MID_PERIOD, EMAS_EMA_LOW_PERIOD, APPLIED_PRICE), this.getExecutor());
-            CompletableFuture<Void> garchAndTrading = CompletableFuture.runAsync(() -> {
-                this.getGarchController().getRunnableJob(CANDLESTICK_H1_FILE, SAMPLE_SIZE, APPLIED_PRICE, PIP_SIZE, HORIZON_BARS, ALPHA_TP, ALPHA_SL);
-                this.getGarchTradingController().getRunnableJob(TICKS_FILE, TIMEFRAME, TRIPLE_DAY, SWAP_LONG_PTS, SWAP_SHORT_PTS);
-            }, this.getExecutor());
+//            CompletableFuture<Void> garchAndTrading = CompletableFuture.runAsync(() -> {
+//                this.getGarchController().getRunnableJob(CANDLESTICK_H1_FILE, SAMPLE_SIZE, APPLIED_PRICE, PIP_SIZE, HORIZON_BARS, ALPHA_TP, ALPHA_SL);
+//                this.getGarchTradingController().getRunnableJob(TICKS_FILE, TIMEFRAME, TRIPLE_DAY, SWAP_LONG_PTS, SWAP_SHORT_PTS);
+//            }, this.getExecutor());
             CompletableFuture<Void> macd = CompletableFuture.runAsync(() -> this.getMacdController().generateAllMacd(CANDLESTICK_H1_FILE, MACD_FAST_EMA_PERIOD, MACD_SLOW_EMA_PERIOD, MACD_MACD_EMA_PERIOD, APPLIED_PRICE), this.getExecutor());
             CompletableFuture<Void> rsi = CompletableFuture.runAsync(() -> this.getRsiController().getRunnableJob(CANDLESTICK_H1_FILE, RSI_PERIOD, APPLIED_PRICE), this.getExecutor());
 
-            CompletableFuture.allOf(emas, garchAndTrading, macd, rsi).join();
+            CompletableFuture.allOf(emas, macd, rsi).thenRun(() -> {
+                this.getGarchController().getRunnableJob(CANDLESTICK_H1_FILE, SAMPLE_SIZE, APPLIED_PRICE, PIP_SIZE, HORIZON_BARS, ALPHA_TP, ALPHA_SL);
+                this.getGarchTradingController().getRunnableJob(TICKS_FILE, TIMEFRAME, TRIPLE_DAY, SWAP_LONG_PTS, SWAP_SHORT_PTS);
+            }).join();
+
             LocalDateTime end = LocalDateTime.now();
             log.info("Ending the bach jobs, duration {}", MathUtils.formatDuration(start, end));
         });

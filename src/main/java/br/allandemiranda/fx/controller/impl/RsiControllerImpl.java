@@ -83,25 +83,27 @@ public class RsiControllerImpl implements RsiController {
                         priceList.removeFirst();
                     }
 
-                    CompletableFuture<BigDecimal> averageGain = CompletableFuture.supplyAsync(() -> {
-                        List<BigDecimal> gains = priceList.stream().map(Price::gain).toList();
-                        return MovingAverageUtils.getSimpleMovingAverage(gains, period);
-                    }, this.getExecutor());
-                    CompletableFuture<BigDecimal> averageLoss = CompletableFuture.supplyAsync(() -> {
-                        List<BigDecimal> losses = priceList.stream().map(Price::loss).toList();
-                        return MovingAverageUtils.getSimpleMovingAverage(losses, period);
-                    }, this.getExecutor());
-                    CompletableFuture.allOf(averageGain, averageLoss).join();
+                    if(priceList.size() == period) {
+                        CompletableFuture<BigDecimal> averageGain = CompletableFuture.supplyAsync(() -> {
+                            List<BigDecimal> gains = priceList.stream().map(Price::gain).toList();
+                            return MovingAverageUtils.getSimpleMovingAverage(gains, period);
+                        }, this.getExecutor());
+                        CompletableFuture<BigDecimal> averageLoss = CompletableFuture.supplyAsync(() -> {
+                            List<BigDecimal> losses = priceList.stream().map(Price::loss).toList();
+                            return MovingAverageUtils.getSimpleMovingAverage(losses, period);
+                        }, this.getExecutor());
+                        CompletableFuture.allOf(averageGain, averageLoss).join();
 
-                    BigDecimal hundred = BigDecimal.valueOf(100D);
-                    BigDecimal averageLossValue = averageLoss.join();
-                    BigDecimal averageGainValue = averageGain.join();
-                    BigDecimal rs = (averageLossValue.compareTo(BigDecimal.ZERO) == 0) ? hundred : averageGainValue.divide(averageLossValue, MathUtils.PRECISION);
-                    BigDecimal rsi = (rs.compareTo(hundred) == 0) ? hundred : hundred.subtract(hundred.divide(BigDecimal.ONE.add(rs), MathUtils.PRECISION));
+                        BigDecimal hundred = BigDecimal.valueOf(100D);
+                        BigDecimal averageLossValue = averageLoss.join();
+                        BigDecimal averageGainValue = averageGain.join();
+                        BigDecimal rs = (averageLossValue.compareTo(BigDecimal.ZERO) == 0) ? hundred : averageGainValue.divide(averageLossValue, MathUtils.PRECISION);
+                        BigDecimal rsi = (rs.compareTo(hundred) == 0) ? hundred : hundred.subtract(hundred.divide(BigDecimal.ONE.add(rs), MathUtils.PRECISION));
 
-                    RSIDto rsiDto = new RSIDto(timestamp, rsi);
-                    this.getValidateBean().validate(rsiDto, timestamp);
-                    this.getRsiService().addRSI(rsiDto);
+                        RSIDto rsiDto = new RSIDto(timestamp, rsi);
+                        this.getValidateBean().validate(rsiDto, timestamp);
+                        this.getRsiService().addRSI(rsiDto);
+                    }
                 }
             });
             LocalDateTime end = LocalDateTime.now();
