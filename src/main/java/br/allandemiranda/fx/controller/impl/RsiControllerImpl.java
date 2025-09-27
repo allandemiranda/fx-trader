@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -45,16 +46,15 @@ public class RsiControllerImpl implements RsiController {
     @PostMapping
     @Override
     public ResponseEntity<Void> generateAllRsi(@RequestParam @Valid @NotNull Path candlesticksFile, @RequestParam @Valid @Min(2) int period, @RequestParam @Valid @NotNull AppliedPrice appliedTo) {
-        this.getExecutor().execute(this.getRunnableJob(candlesticksFile, period, appliedTo));
+        this.getExecutor().execute(() -> this.getRunnableJob(candlesticksFile, period, appliedTo));
         return ResponseEntity.ok().build();
     }
 
-    protected @NotNull Runnable getRunnableJob(@NotNull Path candlesticksFile, int period, @NotNull AppliedPrice appliedTo) {
-        return () -> {
+    protected void getRunnableJob(@NotNull Path candlesticksFile, int period, @NotNull AppliedPrice appliedTo) {
             LocalDateTime start = LocalDateTime.now();
             log.info("Generate all RSI({})[{}] using candlestick path {}", period, appliedTo, candlesticksFile);
 
-            record Price(@NotNull @Positive BigDecimal price, @NotNull @Positive BigDecimal gain, @NotNull @Positive BigDecimal loss) {
+            record Price(@NotNull @Positive BigDecimal price, @NotNull @PositiveOrZero BigDecimal gain, @NotNull @PositiveOrZero BigDecimal loss) {
                 public static @NotNull Price getPrice(@NotNull BigDecimal currentPrice, @NotNull Price lastPrice) {
                     BigDecimal gain = currentPrice.compareTo(lastPrice.price()) > 0 ? currentPrice.subtract(lastPrice.price()) : BigDecimal.ZERO;
                     BigDecimal loss = currentPrice.compareTo(lastPrice.price()) < 0 ? lastPrice.price().subtract(currentPrice) : BigDecimal.ZERO;
@@ -106,6 +106,5 @@ public class RsiControllerImpl implements RsiController {
             });
             LocalDateTime end = LocalDateTime.now();
             log.info("RSI({})[{}] generate finished, duration {}", period, appliedTo, MathUtils.formatDuration(start, end));
-        };
     }
 }

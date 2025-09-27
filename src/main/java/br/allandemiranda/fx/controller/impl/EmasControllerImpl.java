@@ -53,12 +53,11 @@ public class EmasControllerImpl implements EmasController {
     @PostMapping
     @Override
     public ResponseEntity<Void> generateAllEmas(@RequestParam @Valid @NotNull Path candlestickFile, @RequestParam @Min(2) int emaHighPeriod, @RequestParam @Min(2) int emaMidPeriod, @RequestParam @Min(2) int emaLowPeriod, @RequestParam @Valid @NotNull AppliedPrice appliedTo) {
-        this.getExecutor().execute(this.getRunnableJob(candlestickFile, emaHighPeriod, emaMidPeriod, emaLowPeriod, appliedTo));
+        this.getExecutor().execute(() -> this.getRunnableJob(candlestickFile, emaHighPeriod, emaMidPeriod, emaLowPeriod, appliedTo));
         return ResponseEntity.ok().build();
     }
 
-    protected @NotNull Runnable getRunnableJob(@NotNull Path candlestickFile, int emaHighPeriod, int emaMidPeriod, int emaLowPeriod, @NotNull AppliedPrice appliedTo) {
-        return () -> {
+    protected void getRunnableJob(@NotNull Path candlestickFile, int emaHighPeriod, int emaMidPeriod, int emaLowPeriod, @NotNull AppliedPrice appliedTo) {
             LocalDateTime start = LocalDateTime.now();
             log.info("Generate all EMAs(emaHighPeriod={},emaMidPeriod={},emaLowPeriod={},appliedTo={}) using candlestick path {}", emaHighPeriod, emaMidPeriod, emaLowPeriod, appliedTo, candlestickFile);
 
@@ -81,6 +80,5 @@ public class EmasControllerImpl implements EmasController {
             });
             LocalDateTime end = LocalDateTime.now();
             log.info("EMAs(emaHighPeriod={},emaMidPeriod={},emaLowPeriod={},appliedTo={}) generate finished the async, duration {}", emaHighPeriod, emaMidPeriod, emaLowPeriod, appliedTo, MathUtils.formatDuration(start, end));
-        };
     }
 }

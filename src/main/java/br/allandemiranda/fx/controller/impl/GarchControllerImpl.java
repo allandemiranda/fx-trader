@@ -42,12 +42,11 @@ public class GarchControllerImpl implements GarchController {
     @PostMapping
     @Override
     public ResponseEntity<Void> generateAllGarch(@RequestParam @Valid @NotNull Path candlestickFile, @RequestParam int sampleSize, @RequestParam @Valid @NotNull AppliedPrice appliedTo, @RequestParam double pipSize, @RequestParam int horizonBars, @RequestParam double alphaTP, @RequestParam double alphaSL) {
-        this.getExecutor().execute(this.getRunnableJob(candlestickFile, sampleSize, appliedTo, pipSize, horizonBars, alphaTP, alphaSL));
+        this.getExecutor().execute(() -> this.getRunnableJob(candlestickFile, sampleSize, appliedTo, pipSize, horizonBars, alphaTP, alphaSL));
         return ResponseEntity.ok().build();
     }
 
-    protected @NotNull Runnable getRunnableJob(@NotNull Path candlestickFile, int sampleSize, @NotNull AppliedPrice appliedTo, double pipSize, int horizonBars, double alphaTP, double alphaSL) {
-        return () -> {
+    protected void getRunnableJob(@NotNull Path candlestickFile, int sampleSize, @NotNull AppliedPrice appliedTo, double pipSize, int horizonBars, double alphaTP, double alphaSL) {
             LocalDateTime start = LocalDateTime.now();
             log.info("Generate all Garch(sampleSize={},appliedTo={},pipSize={},horizonBars={},alphaTP={},alphaSL={}) using candlestick path {}", sampleSize, appliedTo, pipSize, horizonBars, alphaTP, alphaSL, candlestickFile);
             LinkedList<Double> prices = new LinkedList<>();
@@ -72,6 +71,5 @@ public class GarchControllerImpl implements GarchController {
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             LocalDateTime end = LocalDateTime.now();
             log.info("Garch(sampleSize={},appliedTo={},pipSize={},horizonBars={},alphaTP={},alphaSL={}) generate finished the async, duration {}", sampleSize, appliedTo, pipSize, horizonBars, alphaTP, alphaSL, MathUtils.formatDuration(start, end));
-        };
     }
 }

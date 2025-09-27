@@ -80,12 +80,11 @@ public class GarchTradingControllerImpl implements GarchTradingController {
     @PostMapping
     @Override
     public ResponseEntity<Void> generateAllGarchTrading(@RequestParam @Valid @NotNull Path ticksFile, @RequestParam @Valid @NotNull Timeframe timeframe, @RequestParam @Valid @NotNull DayOfWeek tripleDay, @RequestParam double swapLongPts, @RequestParam double swapShortPts) {
-        this.getExecutor().execute(this.getRunnableJob(ticksFile, timeframe, tripleDay, swapLongPts, swapShortPts));
+        this.getExecutor().execute(() -> this.getRunnableJob(ticksFile, timeframe, tripleDay, swapLongPts, swapShortPts));
         return ResponseEntity.ok().build();
     }
 
-    protected @NotNull Runnable getRunnableJob(@NotNull Path ticksFile, @NotNull Timeframe timeframe, @NotNull DayOfWeek tripleDay, double swapLongPts, double swapShortPts) {
-        return () -> {
+    protected void getRunnableJob(@NotNull Path ticksFile, @NotNull Timeframe timeframe, @NotNull DayOfWeek tripleDay, double swapLongPts, double swapShortPts) {
             LocalDateTime start = LocalDateTime.now();
             log.info("Generate all Garch Trading(timeframe={},tripleDay={},swapLongPts={},swapShortPts={}) using tick path {}", timeframe, tripleDay, swapLongPts, swapShortPts, ticksFile);
 
@@ -155,6 +154,5 @@ public class GarchTradingControllerImpl implements GarchTradingController {
             });
             LocalDateTime end = LocalDateTime.now();
             log.info("Garch Trading(timeframe={},tripleDay={},swapLongPts={},swapShortPts={}) generate finished, duration {}", timeframe, tripleDay, swapLongPts, swapShortPts, MathUtils.formatDuration(start, end));
-        };
     }
 }
