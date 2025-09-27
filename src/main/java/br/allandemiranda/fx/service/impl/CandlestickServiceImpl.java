@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 @Slf4j
 @Service
 @Validated
-@Transactional
+@Transactional(readOnly = true)
 @Getter(AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class CandlestickServiceImpl implements CandlestickService {

@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface EmasRepository extends Repository<EMAs, LocalDateTime> {
 
@@ -17,4 +19,6 @@ public interface EmasRepository extends Repository<EMAs, LocalDateTime> {
     void truncate();
 
     EMAs save(@Valid EMAs emas);
+
+    Optional<EMAs> getEmasByTimestamp(LocalDateTime timestamp);
 }

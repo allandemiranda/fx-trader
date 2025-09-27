@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
 @Slf4j
 @Service
 @Validated
@@ -31,5 +34,10 @@ public class EmasServiceImpl implements EmasService {
         EMAs emas = this.getEmasMapper().toEntity(emasDto);
         EMAs saved = this.getEmasRepository().save(emas);
         return this.getEmasMapper().toDto(saved);
+    }
+
+    @Override
+    public @NotNull Optional<EMAsDto> getEmas(@NotNull LocalDateTime timestamp) {
+        return this.getEmasRepository().getEmasByTimestamp(timestamp).map(this.getEmasMapper()::toDto);
     }
 }
