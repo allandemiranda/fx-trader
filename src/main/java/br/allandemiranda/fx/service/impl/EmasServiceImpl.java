@@ -7,6 +7,7 @@ import br.allandemiranda.fx.repository.EmasRepository;
 import br.allandemiranda.fx.service.EmasService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class EmasServiceImpl implements EmasService {
     }
 
     @Override
-    public @NotNull Optional<EMAsDto> getEmas(@NotNull LocalDateTime timestamp) {
+    public @NotNull Optional<EMAsDto> getEmas(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
         return this.getEmasRepository().getEmasByTimestamp(timestamp).map(this.getEmasMapper()::toDto);
     }
 }

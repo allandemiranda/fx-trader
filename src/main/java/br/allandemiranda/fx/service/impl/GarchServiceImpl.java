@@ -42,7 +42,7 @@ public class GarchServiceImpl implements GarchService {
     @Override
     @NotNull
     @Transactional(readOnly = true)
-    public Optional<GarchDto> findByTimestamp(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
-        return this.getGarchRepository().findByTimestamp(timestamp).map(this.getGarchMapper()::toDto);
+    public Optional<GarchDto> getGarch(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
+        return this.getGarchRepository().getGarchByTimestamp(timestamp).map(this.getGarchMapper()::toDto);
     }
 }

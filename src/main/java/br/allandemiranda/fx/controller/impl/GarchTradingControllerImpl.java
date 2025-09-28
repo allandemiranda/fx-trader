@@ -126,7 +126,7 @@ public class GarchTradingControllerImpl implements GarchTradingController {
                         LocalDateTime lastOpenTime = TimeframeUtils.getCandlestickTimestamp(lastTick[0].getTimestamp(), timeframe);
                         LocalDateTime currentOpenTime = TimeframeUtils.getCandlestickTimestamp(tick.getTimestamp(), timeframe);
                         if (lastOpenTime.isBefore(currentOpenTime)) {
-                            this.getGarchService().findByTimestamp(currentOpenTime).ifPresent(garch -> {
+                            this.getGarchService().getGarch(currentOpenTime).ifPresent(garch -> {
                                 double spread = tick.getBid() - tick.getAsk();
                                 double tp = garch.getTpPips();
                                 double sl = -Math.abs(garch.getSlPips());

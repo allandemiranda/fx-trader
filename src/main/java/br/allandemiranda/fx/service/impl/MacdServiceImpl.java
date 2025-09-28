@@ -7,6 +7,7 @@ import br.allandemiranda.fx.repository.MacdRepository;
 import br.allandemiranda.fx.service.MacdService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -32,5 +36,10 @@ public class MacdServiceImpl implements MacdService {
         MACD macd = this.getMacdMapper().toEntity(macdDto);
         MACD saved = this.getMacdRepository().save(macd);
         return this.getMacdMapper().toDto(saved);
+    }
+
+    @Override
+    public Optional<MACDDto> getMACD(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
+        return this.getMacdRepository().getMACDByTimestamp(timestamp).map(this.getMacdMapper()::toDto);
     }
 }

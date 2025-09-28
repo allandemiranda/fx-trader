@@ -13,5 +13,5 @@ public interface GarchService {
     GarchDto addGarch(@NotNull @Valid GarchDto garchDto);
 
     @NotNull
-    Optional<GarchDto> findByTimestamp(@Valid @NotNull @PastOrPresent LocalDateTime timestamp);
+    Optional<GarchDto> getGarch(@Valid @NotNull @PastOrPresent LocalDateTime timestamp);
 }

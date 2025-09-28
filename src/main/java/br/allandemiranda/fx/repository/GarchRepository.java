@@ -18,5 +18,5 @@ public interface GarchRepository extends Repository<Garch, LocalDateTime> {
 
     Garch save(Garch garch);
 
-    Optional<Garch> findByTimestamp(LocalDateTime timestamp);
+    Optional<Garch> getGarchByTimestamp(LocalDateTime timestamp);
 }

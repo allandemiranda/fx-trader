@@ -32,6 +32,7 @@ public class BatchJobControllerImpl implements BatchJobController {
     public static final Path TICKS_FILE = Path.of("C:\\Users\\allan\\OneDrive\\Documentos\\MT5\\EURUSD_201112190000_202509122358.csv");
     public static final AppliedPrice APPLIED_PRICE = AppliedPrice.PRICE_CLOSE;
     public static final Timeframe TIMEFRAME = Timeframe.H1;
+    public static final Path ML_FILE = Path.of("C:\\Users\\allan\\OneDrive\\Documentos\\MT5\\ml.model");
 
     // EMAs
     public static final int EMAS_EMA_HIGH_PERIOD = 20;
@@ -63,6 +64,7 @@ public class BatchJobControllerImpl implements BatchJobController {
     private final GarchTradingControllerImpl garchTradingController;
     private final MacdControllerImpl macdController;
     private final RsiControllerImpl rsiController;
+    private final MLControllerImpl mlController;
 
     private final Executor executor;
 
@@ -84,6 +86,7 @@ public class BatchJobControllerImpl implements BatchJobController {
             CompletableFuture.allOf(emas, macd, rsi).thenRun(() -> {
                 this.getGarchController().getRunnableJob(CANDLESTICK_H1_FILE, SAMPLE_SIZE, APPLIED_PRICE, PIP_SIZE, HORIZON_BARS, ALPHA_TP, ALPHA_SL);
                 this.getGarchTradingController().getRunnableJob(TICKS_FILE, TIMEFRAME, TRIPLE_DAY, SWAP_LONG_PTS, SWAP_SHORT_PTS);
+                this.getMlController().generateML(CANDLESTICK_H1_FILE, ML_FILE);
             }).join();
 
             LocalDateTime end = LocalDateTime.now();

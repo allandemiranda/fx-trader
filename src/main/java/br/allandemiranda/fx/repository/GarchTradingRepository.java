@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public interface GarchTradingRepository extends Repository<GarchTrading, LocalDateTime> {
 
@@ -17,4 +18,6 @@ public interface GarchTradingRepository extends Repository<GarchTrading, LocalDa
     void truncate();
 
     GarchTrading save(@Valid GarchTrading garchTrading);
+
+    Optional<GarchTrading> getGarchByTimestamp(LocalDateTime timestamp);
 }

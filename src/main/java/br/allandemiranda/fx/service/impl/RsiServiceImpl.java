@@ -7,6 +7,7 @@ import br.allandemiranda.fx.repository.RsiRepository;
 import br.allandemiranda.fx.service.RsiService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -32,5 +36,10 @@ public class RsiServiceImpl implements RsiService {
         RSI rsi = this.getRsiMapper().toEntity(rsiDto);
         RSI saved = this.getRsiRepository().save(rsi);
         return this.getRsiMapper().toDto(saved);
+    }
+
+    @Override
+    public Optional<RSIDto> getRSI(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
+        return this.getRsiRepository().getRSIByTimestamp(timestamp).map(this.getRsiMapper()::toDto);
     }
 }
