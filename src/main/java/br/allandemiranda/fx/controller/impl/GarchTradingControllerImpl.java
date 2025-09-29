@@ -127,14 +127,14 @@ public class GarchTradingControllerImpl implements GarchTradingController {
                         LocalDateTime currentOpenTime = TimeframeUtils.getCandlestickTimestamp(tick.getTimestamp(), timeframe);
                         if (lastOpenTime.isBefore(currentOpenTime)) {
                             this.getGarchService().getGarch(currentOpenTime).ifPresent(garch -> {
-                                double spread = tick.getBid() - tick.getAsk();
+                                double spread = tick.getAsk() - tick.getBid();
                                 double tp = garch.getTpPips();
                                 double sl = -Math.abs(garch.getSlPips());
 
                                 DealReason dealReason = spread >= Math.abs(garch.getSlPips()) ? DealReason.DEAL_REASON_SL : DealReason.NONE;
 
-                                GarchPositionTypeDto buy = new GarchPositionTypeDto(tick.getTimestamp(), tick.getBid() - tick.getAsk(), 0, dealReason, tick.getAsk());
-                                GarchPositionTypeDto sell = new GarchPositionTypeDto(tick.getTimestamp(), tick.getAsk() - tick.getBid(), 0, dealReason, tick.getBid());
+                                GarchPositionTypeDto buy = new GarchPositionTypeDto(tick.getTimestamp(), spread, 0, dealReason, tick.getAsk());
+                                GarchPositionTypeDto sell = new GarchPositionTypeDto(tick.getTimestamp(), spread, 0, dealReason, tick.getBid());
 
                                 if (dealReason.equals(DealReason.DEAL_REASON_SL)) {
                                     GarchTradingDto garchTradingDto = new GarchTradingDto(garch.getTimestamp(), tick.getTimestamp(), buy, sell, spread);
