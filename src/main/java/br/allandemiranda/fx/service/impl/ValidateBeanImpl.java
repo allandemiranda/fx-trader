@@ -17,7 +17,7 @@ import java.util.Collection;
 @Slf4j
 @RequiredArgsConstructor
 @Getter(AccessLevel.PRIVATE)
-@Transactional(readOnly = true)
+@Transactional
 @Service
 public class ValidateBeanImpl implements ValidateBean {
 

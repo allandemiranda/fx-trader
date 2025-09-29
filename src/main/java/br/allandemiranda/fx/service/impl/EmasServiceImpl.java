@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -30,6 +31,7 @@ public class EmasServiceImpl implements EmasService {
     private final EmasRepository emasRepository;
     private final EMAsMapper emasMapper;
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public @NotNull EMAsDto add(@NotNull @Valid EMAsDto emasDto) {
         EMAs emas = this.getEmasMapper().toEntity(emasDto);
@@ -37,6 +39,7 @@ public class EmasServiceImpl implements EmasService {
         return this.getEmasMapper().toDto(saved);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public @NotNull Optional<EMAsDto> getEmas(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
         return this.getEmasRepository().getEmasByTimestamp(timestamp).map(this.getEmasMapper()::toDto);

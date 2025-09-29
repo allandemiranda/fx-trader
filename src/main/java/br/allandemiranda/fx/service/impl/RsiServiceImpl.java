@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -31,6 +32,7 @@ public class RsiServiceImpl implements RsiService {
     private final RSIMapper rsiMapper;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public @NotNull RSIDto addRSI(@NotNull @Valid RSIDto rsiDto) {
         log.debug("addRSI {}", rsiDto);
         RSI rsi = this.getRsiMapper().toEntity(rsiDto);
@@ -39,6 +41,8 @@ public class RsiServiceImpl implements RsiService {
     }
 
     @Override
+    @NotNull
+    @Transactional(readOnly = true)
     public Optional<RSIDto> getRSI(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
         return this.getRsiRepository().getRSIByTimestamp(timestamp).map(this.getRsiMapper()::toDto);
     }

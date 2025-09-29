@@ -1,10 +1,6 @@
 package br.allandemiranda.fx.repository;
 
 import br.allandemiranda.fx.model.GarchTrading;
-import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
 import java.time.LocalDateTime;
@@ -12,12 +8,7 @@ import java.util.Optional;
 
 public interface GarchTradingRepository extends Repository<GarchTrading, LocalDateTime> {
 
-    @Modifying
-    @Transactional
-    @Query(value = "TRUNCATE TABLE GARCH_TRADING", nativeQuery = true)
-    void truncate();
-
-    GarchTrading save(@Valid GarchTrading garchTrading);
+    GarchTrading save(GarchTrading garchTrading);
 
     Optional<GarchTrading> getGarchByTimestamp(LocalDateTime timestamp);
 }

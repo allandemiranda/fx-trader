@@ -47,6 +47,7 @@ public class XgbServiceImpl implements XgbService {
         this.getXgbRepository().save(booster);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<float[][]> getPredicate(float[] x) {
         return this.getXgbRepository().getXgb().map(booster -> XgbTrainer.runPredicateSimple(x, booster));

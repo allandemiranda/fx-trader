@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -31,6 +32,7 @@ public class MacdServiceImpl implements MacdService {
     private final MACDMapper macdMapper;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public @NotNull MACDDto addMACD(@NotNull @Valid MACDDto macdDto) {
         log.debug("addMACD {}", macdDto);
         MACD macd = this.getMacdMapper().toEntity(macdDto);
@@ -39,6 +41,8 @@ public class MacdServiceImpl implements MacdService {
     }
 
     @Override
+    @NotNull
+    @Transactional(readOnly = true)
     public Optional<MACDDto> getMACD(@Valid @NotNull @PastOrPresent LocalDateTime timestamp) {
         return this.getMacdRepository().getMACDByTimestamp(timestamp).map(this.getMacdMapper()::toDto);
     }

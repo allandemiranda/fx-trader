@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -32,6 +33,7 @@ public class GarchServiceImpl implements GarchService {
 
     @Override
     @NotNull
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public GarchDto addGarch(@NotNull @Valid GarchDto garchDto) {
         log.debug("addGarch {}", garchDto);
         Garch garch = this.getGarchMapper().toEntity(garchDto);

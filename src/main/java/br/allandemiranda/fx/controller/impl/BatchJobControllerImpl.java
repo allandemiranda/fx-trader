@@ -84,7 +84,7 @@ public class BatchJobControllerImpl implements BatchJobController {
             CompletableFuture<Void> rsi = CompletableFuture.runAsync(() -> this.getRsiController().getRunnableJob(CANDLESTICK_H1_FILE, RSI_PERIOD, APPLIED_PRICE), this.getExecutor());
 
             CompletableFuture.allOf(emas, macd, rsi).thenRun(() -> {
-                this.getGarchController().getRunnableJob(CANDLESTICK_H1_FILE, SAMPLE_SIZE, APPLIED_PRICE, PIP_SIZE, HORIZON_BARS, ALPHA_TP, ALPHA_SL);
+//                this.getGarchController().getRunnableJob(CANDLESTICK_H1_FILE, SAMPLE_SIZE, APPLIED_PRICE, PIP_SIZE, HORIZON_BARS, ALPHA_TP, ALPHA_SL);
                 this.getGarchTradingController().getRunnableJob(TICKS_FILE, TIMEFRAME, TRIPLE_DAY, SWAP_LONG_PTS, SWAP_SHORT_PTS);
                 this.getMlController().generateML(CANDLESTICK_H1_FILE, ML_FILE);
             }).join();
