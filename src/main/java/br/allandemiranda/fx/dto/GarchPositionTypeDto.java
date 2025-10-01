@@ -23,7 +23,6 @@ public class GarchPositionTypeDto implements Serializable {
 
     double profit;
 
-    @PositiveOrZero
     double swapCost;
 
     @NotNull

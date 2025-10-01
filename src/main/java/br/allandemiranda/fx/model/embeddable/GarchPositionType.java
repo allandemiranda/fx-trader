@@ -30,7 +30,6 @@ public class GarchPositionType {
 
     @Column(nullable = false, updatable = false)
     @JdbcTypeCode(SqlTypes.DOUBLE)
-    @PositiveOrZero
     private double swapCost = 0D;
 
     @NotNull

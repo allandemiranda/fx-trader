@@ -14,5 +14,5 @@ import java.time.DayOfWeek;
 @RequestMapping("/api/garchTrading")
 public interface GarchTradingController {
     @PostMapping
-    ResponseEntity<Void> generateAllGarchTrading(@RequestParam @Valid @NotNull Path ticksFile, @RequestParam @Valid @NotNull Timeframe timeframe, @RequestParam @Valid @NotNull DayOfWeek tripleDay, @RequestParam double swapLongPts, @RequestParam double swapShortPts);
+    ResponseEntity<Void> generateAllGarchTrading(@RequestParam @Valid @NotNull Path ticksFile, @RequestParam @Valid @NotNull Timeframe timeframe, @RequestParam @Valid @NotNull DayOfWeek tripleDay, @RequestParam double swapLongPts, @RequestParam double swapShortPts, @RequestParam double pipSize);
 }

@@ -79,80 +79,82 @@ public class GarchTradingControllerImpl implements GarchTradingController {
 
     @PostMapping
     @Override
-    public ResponseEntity<Void> generateAllGarchTrading(@RequestParam @Valid @NotNull Path ticksFile, @RequestParam @Valid @NotNull Timeframe timeframe, @RequestParam @Valid @NotNull DayOfWeek tripleDay, @RequestParam double swapLongPts, @RequestParam double swapShortPts) {
-        this.getExecutor().execute(() -> this.getRunnableJob(ticksFile, timeframe, tripleDay, swapLongPts, swapShortPts));
+    public ResponseEntity<Void> generateAllGarchTrading(@RequestParam @Valid @NotNull Path ticksFile, @RequestParam @Valid @NotNull Timeframe timeframe, @RequestParam @Valid @NotNull DayOfWeek tripleDay, @RequestParam double swapLongPts, @RequestParam double swapShortPts, @RequestParam double pipSize) {
+        this.getExecutor().execute(() -> this.getRunnableJob(ticksFile, timeframe, tripleDay, swapLongPts, swapShortPts, pipSize));
         return ResponseEntity.ok().build();
     }
 
-    protected void getRunnableJob(@NotNull Path ticksFile, @NotNull Timeframe timeframe, @NotNull DayOfWeek tripleDay, double swapLongPts, double swapShortPts) {
-            LocalDateTime start = LocalDateTime.now();
-            log.info("Generate all Garch Trading(timeframe={},tripleDay={},swapLongPts={},swapShortPts={}) using tick path {}", timeframe, tripleDay, swapLongPts, swapShortPts, ticksFile);
+    protected void getRunnableJob(@NotNull Path ticksFile, @NotNull Timeframe timeframe, @NotNull DayOfWeek tripleDay, double swapLongPts, double swapShortPts, double pipSize) {
+        LocalDateTime start = LocalDateTime.now();
+        log.info("Generate all Garch Trading(timeframe={},tripleDay={},swapLongPts={},swapShortPts={}) using tick path {}", timeframe, tripleDay, swapLongPts, swapShortPts, ticksFile);
 
-            record Trading(@NotNull @PastOrPresent LocalDateTime openTime, @NotNull GarchPositionTypeDto buy, @NotNull GarchPositionTypeDto sell, @PositiveOrZero double spread, @Positive double tp, @Negative double sl) {
+        record Trading(@NotNull @PastOrPresent LocalDateTime openTime, @NotNull GarchPositionTypeDto buy, @NotNull GarchPositionTypeDto sell, @PositiveOrZero double spread, @Positive double tp, @Negative double sl) {
+        }
+        TickDto[] lastTick = new TickDto[1];
+        ConcurrentHashMap<LocalDateTime, Trading> openPositions = new ConcurrentHashMap<>();
+        this.getTickService().consumerTicks(ticksFile, tick -> {
+            if (lastTick[0] != null) {
+                CompletableFuture<Void> processPositions = CompletableFuture.runAsync(() ->
+                                openPositions.entrySet().parallelStream().forEach(position -> {
+                                    LocalDateTime timestamp = position.getKey();
+                                    Trading trading = position.getValue();
+                                    int rollover = SwapUtils.countRolloverUnits(trading.openTime, tick.getTimestamp(), tripleDay);
+
+                                    CompletableFuture<GarchPositionTypeDto> buyCompletableFuture = CompletableFuture.supplyAsync(() -> GarchTradingControllerImpl.updateGarchTrading(true, trading.buy(), tick, swapLongPts, swapShortPts, rollover, trading.tp, trading.sl), this.getExecutor());
+                                    CompletableFuture<GarchPositionTypeDto> sellCompletableFuture = CompletableFuture.supplyAsync(() -> GarchTradingControllerImpl.updateGarchTrading(false, trading.sell(), tick, swapLongPts, swapShortPts, rollover, trading.tp, trading.sl), this.getExecutor());
+                                    CompletableFuture.allOf(buyCompletableFuture, sellCompletableFuture).join();
+                                    GarchPositionTypeDto buy = buyCompletableFuture.join();
+                                    this.getValidateBean().validate(buy, trading.openTime);
+                                    GarchPositionTypeDto sell = sellCompletableFuture.join();
+                                    this.getValidateBean().validate(sell, trading.openTime);
+                                    Trading tradingUpdated = new Trading(trading.openTime, buy, sell, trading.spread, trading.tp, trading.sl);
+                                    this.getValidateBean().validate(tradingUpdated, tradingUpdated.openTime);
+
+                                    if (tradingUpdated.buy().getDealReason().equals(DealReason.DEAL_REASON_TP) || tradingUpdated.sell().getDealReason().equals(DealReason.DEAL_REASON_TP)) {
+                                        GarchTradingDto garchTradingDto = new GarchTradingDto(timestamp, trading.openTime, buy, sell, trading.spread);
+                                        this.getGarchTradingService().addGarchTrading(garchTradingDto);
+                                        openPositions.remove(timestamp);
+                                    } else if (!tradingUpdated.buy().getDealReason().equals(DealReason.NONE) && !tradingUpdated.sell().getDealReason().equals(DealReason.NONE)) {
+                                        GarchTradingDto garchTradingDto = new GarchTradingDto(timestamp, trading.openTime, buy, sell, trading.spread);
+                                        this.getGarchTradingService().addGarchTrading(garchTradingDto);
+                                        openPositions.remove(timestamp);
+                                    } else {
+                                        openPositions.put(timestamp, tradingUpdated);
+                                    }
+                                })
+                        , this.getExecutor());
+
+                CompletableFuture<Void> openOrders = CompletableFuture.runAsync(() -> {
+                    LocalDateTime lastOpenTime = TimeframeUtils.getCandlestickTimestamp(lastTick[0].getTimestamp(), timeframe);
+                    LocalDateTime currentOpenTime = TimeframeUtils.getCandlestickTimestamp(tick.getTimestamp(), timeframe);
+                    if (lastOpenTime.isBefore(currentOpenTime)) {
+                        this.getGarchService().getGarch(currentOpenTime).ifPresent(garch -> {
+                            double spread = tick.getAsk() - tick.getBid();
+                            double tp = garch.getTpPips() * pipSize;
+                            double sl = -Math.abs(garch.getSlPips()) * pipSize;
+
+                            DealReason dealReason = spread >= Math.abs(garch.getSlPips()) ? DealReason.DEAL_REASON_SL : DealReason.NONE;
+
+                            GarchPositionTypeDto buy = new GarchPositionTypeDto(tick.getTimestamp(), Math.abs(spread), 0, dealReason, tick.getAsk());
+                            GarchPositionTypeDto sell = new GarchPositionTypeDto(tick.getTimestamp(), Math.abs(spread), 0, dealReason, tick.getBid());
+
+                            if (dealReason.equals(DealReason.DEAL_REASON_SL)) {
+                                GarchTradingDto garchTradingDto = new GarchTradingDto(garch.getTimestamp(), tick.getTimestamp(), buy, sell, spread);
+                                this.getGarchTradingService().addGarchTrading(garchTradingDto);
+                            } else {
+                                Trading trading = new Trading(tick.getTimestamp(), buy, sell, spread, tp, sl);
+                                this.getValidateBean().validate(trading, tick.getTimestamp());
+                                openPositions.put(currentOpenTime, trading);
+                            }
+                        });
+                    }
+                }, this.getExecutor());
+
+                CompletableFuture.allOf(processPositions, openOrders).join();
             }
-            TickDto[] lastTick = new TickDto[1];
-            ConcurrentHashMap<LocalDateTime, Trading> openPositions = new ConcurrentHashMap<>();
-            this.getTickService().consumerTicks(ticksFile, tick -> {
-                if (lastTick[0] != null) {
-                    CompletableFuture<Void> processPositions = CompletableFuture.runAsync(() -> openPositions.entrySet().parallelStream().forEach(position -> {
-                        LocalDateTime timestamp = position.getKey();
-                        Trading trading = position.getValue();
-                        int rollover = SwapUtils.countRolloverUnits(trading.openTime, tick.getTimestamp(), tripleDay);
-
-                        CompletableFuture<GarchPositionTypeDto> buyCompletableFuture = CompletableFuture.supplyAsync(() -> GarchTradingControllerImpl.updateGarchTrading(true, trading.buy(), tick, swapLongPts, swapShortPts, rollover, trading.tp, trading.sl), this.getExecutor());
-                        CompletableFuture<GarchPositionTypeDto> sellCompletableFuture = CompletableFuture.supplyAsync(() -> GarchTradingControllerImpl.updateGarchTrading(false, trading.sell(), tick, swapLongPts, swapShortPts, rollover, trading.tp, trading.sl), this.getExecutor());
-                        CompletableFuture.allOf(buyCompletableFuture, sellCompletableFuture).join();
-                        GarchPositionTypeDto buy = buyCompletableFuture.join();
-                        this.getValidateBean().validate(buy, trading.openTime);
-                        GarchPositionTypeDto sell = sellCompletableFuture.join();
-                        this.getValidateBean().validate(sell, trading.openTime);
-                        Trading tradingUpdated = new Trading(trading.openTime, buy, sell, trading.spread, trading.tp, trading.sl);
-                        this.getValidateBean().validate(tradingUpdated, tradingUpdated.openTime);
-
-                        if (tradingUpdated.buy().getDealReason().equals(DealReason.DEAL_REASON_TP) || tradingUpdated.sell().getDealReason().equals(DealReason.DEAL_REASON_TP)) {
-                            GarchTradingDto garchTradingDto = new GarchTradingDto(timestamp, trading.openTime, buy, sell, trading.spread);
-                            this.getGarchTradingService().addGarchTrading(garchTradingDto);
-                            openPositions.remove(timestamp);
-                        } else if (!tradingUpdated.buy().getDealReason().equals(DealReason.NONE) && !tradingUpdated.sell().getDealReason().equals(DealReason.NONE)) {
-                            GarchTradingDto garchTradingDto = new GarchTradingDto(timestamp, trading.openTime, buy, sell, trading.spread);
-                            this.getGarchTradingService().addGarchTrading(garchTradingDto);
-                            openPositions.remove(timestamp);
-                        } else {
-                            openPositions.put(timestamp, tradingUpdated);
-                        }
-                    }), this.getExecutor());
-
-                    CompletableFuture<Void> openOrders = CompletableFuture.runAsync(() -> {
-                        LocalDateTime lastOpenTime = TimeframeUtils.getCandlestickTimestamp(lastTick[0].getTimestamp(), timeframe);
-                        LocalDateTime currentOpenTime = TimeframeUtils.getCandlestickTimestamp(tick.getTimestamp(), timeframe);
-                        if (lastOpenTime.isBefore(currentOpenTime)) {
-                            this.getGarchService().getGarch(currentOpenTime).ifPresent(garch -> {
-                                double spread = tick.getAsk() - tick.getBid();
-                                double tp = garch.getTpPips();
-                                double sl = -Math.abs(garch.getSlPips());
-
-                                DealReason dealReason = spread >= Math.abs(garch.getSlPips()) ? DealReason.DEAL_REASON_SL : DealReason.NONE;
-
-                                GarchPositionTypeDto buy = new GarchPositionTypeDto(tick.getTimestamp(), spread, 0, dealReason, tick.getAsk());
-                                GarchPositionTypeDto sell = new GarchPositionTypeDto(tick.getTimestamp(), spread, 0, dealReason, tick.getBid());
-
-                                if (dealReason.equals(DealReason.DEAL_REASON_SL)) {
-                                    GarchTradingDto garchTradingDto = new GarchTradingDto(garch.getTimestamp(), tick.getTimestamp(), buy, sell, spread);
-                                    this.getGarchTradingService().addGarchTrading(garchTradingDto);
-                                } else {
-                                    Trading trading = new Trading(tick.getTimestamp(), buy, sell, spread, tp, sl);
-                                    this.getValidateBean().validate(trading, tick.getTimestamp());
-                                    openPositions.put(currentOpenTime, trading);
-                                }
-                            });
-                        }
-                    }, this.getExecutor());
-
-                    CompletableFuture.allOf(processPositions, openOrders).join();
-                }
-                lastTick[0] = tick;
-            });
-            LocalDateTime end = LocalDateTime.now();
-            log.info("Garch Trading(timeframe={},tripleDay={},swapLongPts={},swapShortPts={}) generate finished, duration {}", timeframe, tripleDay, swapLongPts, swapShortPts, MathUtils.formatDuration(start, end));
+            lastTick[0] = tick;
+        });
+        LocalDateTime end = LocalDateTime.now();
+        log.info("Garch Trading(timeframe={},tripleDay={},swapLongPts={},swapShortPts={}) generate finished, duration {}", timeframe, tripleDay, swapLongPts, swapShortPts, MathUtils.formatDuration(start, end));
     }
 }
