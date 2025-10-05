@@ -9,6 +9,6 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 
 public interface TickService {
-    @SneakyThrows
+
     void consumerTicks(@Valid @NotNull Path tickFile, @Valid @NotNull Consumer<TickDto> consumer);
 }

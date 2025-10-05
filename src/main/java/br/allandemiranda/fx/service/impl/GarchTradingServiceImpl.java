@@ -35,7 +35,7 @@ public class GarchTradingServiceImpl implements br.allandemiranda.fx.service.Gar
     public @NotNull GarchTradingDto addGarchTrading(@NotNull @Valid GarchTradingDto garchTradingDto) {
         GarchTrading garchTrading = this.getGarchTradingMapper().toEntity(garchTradingDto);
         GarchTrading saved = this.getGarchTradingRepository().save(garchTrading);
-        log.warn("Saved garch trading {}", saved);
+        //log.warn("Saved garch trading {}", saved);
         return this.getGarchTradingMapper().toDto(saved);
     }
 

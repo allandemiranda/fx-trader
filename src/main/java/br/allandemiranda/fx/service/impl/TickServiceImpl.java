@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,7 +28,6 @@ import java.util.function.Consumer;
 @Slf4j
 @Service
 @Validated
-@Transactional(readOnly = true)
 @Getter(AccessLevel.PRIVATE)
 @RequiredArgsConstructor
 public class TickServiceImpl implements TickService {
@@ -46,7 +46,6 @@ public class TickServiceImpl implements TickService {
         return isPriceEquals;
     }
 
-    @SneakyThrows
     @Override
     public void consumerTicks(@Valid @NotNull Path tickFile, @Valid @NotNull Consumer<TickDto> consumer) {
         record TickFileLineModel(String date, String time, String bid, String ask) {
@@ -74,6 +73,8 @@ public class TickServiceImpl implements TickService {
                             out.accept(tickDto);
                         }
                     }).forEachOrdered(consumer);
+        } catch (Exception e) {
+           log.warn(e.getMessage());
         }
     }
 }
