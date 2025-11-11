@@ -2,6 +2,9 @@ package br.allandemiranda.fx.utils;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.math3.distribution.TDistribution;
+
+import java.util.SplittableRandom;
 
 @UtilityClass
 public final class GarchUtils {
@@ -34,8 +37,7 @@ public final class GarchUtils {
         return Math.abs(x - b) <= 1e-6 * Math.max(1.0, Math.abs(b));
     }
 
-    // simula soma de retornos para h barras com t-innov, antitético tratado fora
-    public static double simulatePathReturnSum(int h, double h1Ahead, double muForQ, double omega, double alpha, double beta, double zStdFirst, org.apache.commons.math3.distribution.TDistribution t, double scaleStd, java.util.SplittableRandom rng) {
+    public static double simulatePathReturnSum(int h, double h1Ahead, double muForQ, double omega, double alpha, double beta, double zStdFirst, TDistribution t, double scaleStd, SplittableRandom rng) {
         double hNext = h1Ahead;
         double retSum = 0.0;
 
@@ -55,7 +57,7 @@ public final class GarchUtils {
         return retSum;
     }
 
-    public static double nextOpen01(java.util.@NotNull SplittableRandom rng) {
+    public static double nextOpen01(@NotNull SplittableRandom rng) {
         double u;
         do {
             u = rng.nextDouble();

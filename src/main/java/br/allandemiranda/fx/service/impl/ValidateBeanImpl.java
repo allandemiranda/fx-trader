@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -46,7 +45,7 @@ public class ValidateBeanImpl implements ValidateBean {
         if (!violations.isEmpty()) {
             String name = bean.getClass().getName();
             String details = ValidateBeanImpl.getDetails(violations);
-            log.warn("Validation failed for {} {} at {} -> {}", name, bean, timestamp, details);
+            log.debug("Validation failed for {} {} at {} -> {}", name, bean, timestamp, details);
             return false;
         } else {
             return true;

@@ -53,6 +53,7 @@ public class TickServiceImpl implements TickService {
 
         try (BufferedReader br = Files.newBufferedReader(tickFile, StandardCharsets.UTF_8)) {
             double[] lastPrices = new double[]{-1D, -1D};
+            LocalDateTime[] lastTimestamp = new LocalDateTime[]{LocalDateTime.MIN};
             br.lines()
                     .skip(1)
                     .filter(line -> !line.isBlank())
@@ -61,6 +62,12 @@ public class TickServiceImpl implements TickService {
                     .map(columns -> new TickFileLineModel(columns[0], columns[1], columns[2], columns[3]))
                     .<TickDto>mapMulti((tick, out) -> {
                         LocalDateTime timestamp = ReadFileDataUtils.getDateTime(tick.date(), tick.time());
+                        if(timestamp.isBefore(lastTimestamp[0])) {
+                            throw new RuntimeException("lasttime: " + timestamp + " is before " + lastTimestamp[0]);
+                        } else {
+                            lastTimestamp[0] = timestamp;
+                        }
+
                         double bidPrice = ReadFileDataUtils.getPrice(tick.bid());
                         double askPrice = ReadFileDataUtils.getPrice(tick.ask());
 
@@ -69,7 +76,7 @@ public class TickServiceImpl implements TickService {
 
                         if (!isBidEquals && !isAskEquals && lastPrices[0] >= 0D && lastPrices[1] >= 0D) {
                             TickDto tickDto = new TickDto(timestamp, lastPrices[0], lastPrices[1]);
-                            this.getValidateBean().validate(tickDto, timestamp);
+                            //this.getValidateBean().validate(tickDto, timestamp);
                             out.accept(tickDto);
                         }
                     }).forEachOrdered(consumer);

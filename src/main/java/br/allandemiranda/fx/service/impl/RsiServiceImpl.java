@@ -34,7 +34,6 @@ public class RsiServiceImpl implements RsiService {
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public @NotNull RSIDto addRSI(@NotNull @Valid RSIDto rsiDto) {
-        log.debug("addRSI {}", rsiDto);
         RSI rsi = this.getRsiMapper().toEntity(rsiDto);
         RSI saved = this.getRsiRepository().save(rsi);
         return this.getRsiMapper().toDto(saved);

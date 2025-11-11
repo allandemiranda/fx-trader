@@ -16,7 +16,7 @@ import br.allandemiranda.fx.service.MacdService;
 import br.allandemiranda.fx.service.RsiService;
 import br.allandemiranda.fx.service.ValidateBean;
 import br.allandemiranda.fx.service.XgbService;
-import br.allandemiranda.fx.utils.ForexSessionUtils;
+import br.allandemiranda.fx.utils.MarketSessionUtils;
 import br.allandemiranda.fx.utils.MathUtils;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -58,7 +58,7 @@ public class MLControllerImpl {
     private static float @NotNull [] getDataSet(@NotNull LocalDateTime timestamp, @NotNull EMAsDto emas, @NotNull MACDDto macd, @NotNull RSIDto rsi, @NotNull GarchDto garch, @NotNull GarchTradingDto trading) {
         // time indicators
         float dayOfWeek = timestamp.getDayOfWeek().getValue();
-        float session = ForexSessionUtils.detectSession(timestamp).getValue();
+        float session = MarketSessionUtils.detectSession(timestamp).getValue();
 
         // EMAs indicator
         float emaHigh = emas.getEmaHigh().floatValue();

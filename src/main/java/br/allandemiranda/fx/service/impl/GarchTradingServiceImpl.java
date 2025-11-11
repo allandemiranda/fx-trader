@@ -10,7 +10,6 @@ import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,6 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-@Slf4j
 @Service
 @Validated
 @Transactional
@@ -33,9 +31,8 @@ public class GarchTradingServiceImpl implements br.allandemiranda.fx.service.Gar
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public @NotNull GarchTradingDto addGarchTrading(@NotNull @Valid GarchTradingDto garchTradingDto) {
-        GarchTrading garchTrading = this.getGarchTradingMapper().toEntity(garchTradingDto);
-        GarchTrading saved = this.getGarchTradingRepository().save(garchTrading);
-        //log.warn("Saved garch trading {}", saved);
+        final GarchTrading garchTrading = this.getGarchTradingMapper().toEntity(garchTradingDto);
+        final GarchTrading saved = this.getGarchTradingRepository().save(garchTrading);
         return this.getGarchTradingMapper().toDto(saved);
     }
 

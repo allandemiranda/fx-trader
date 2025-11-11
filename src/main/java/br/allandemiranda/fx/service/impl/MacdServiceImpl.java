@@ -11,7 +11,6 @@ import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,6 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-@Slf4j
 @Service
 @Validated
 @Transactional
@@ -34,9 +32,8 @@ public class MacdServiceImpl implements MacdService {
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public @NotNull MACDDto addMACD(@NotNull @Valid MACDDto macdDto) {
-        log.debug("addMACD {}", macdDto);
-        MACD macd = this.getMacdMapper().toEntity(macdDto);
-        MACD saved = this.getMacdRepository().save(macd);
+        final MACD macd = this.getMacdMapper().toEntity(macdDto);
+        final MACD saved = this.getMacdRepository().save(macd);
         return this.getMacdMapper().toDto(saved);
     }
 

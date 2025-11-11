@@ -11,7 +11,6 @@ import jakarta.validation.constraints.PastOrPresent;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,6 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-@Slf4j
 @Service
 @Validated
 @Transactional
@@ -34,8 +32,8 @@ public class EmasServiceImpl implements EmasService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
     public @NotNull EMAsDto add(@NotNull @Valid EMAsDto emasDto) {
-        EMAs emas = this.getEmasMapper().toEntity(emasDto);
-        EMAs saved = this.getEmasRepository().save(emas);
+        final EMAs emas = this.getEmasMapper().toEntity(emasDto);
+        final EMAs saved = this.getEmasRepository().save(emas);
         return this.getEmasMapper().toDto(saved);
     }
 
